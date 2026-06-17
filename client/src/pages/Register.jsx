@@ -17,7 +17,7 @@ export default function Register() {
       const res = await api.post('/auth/register', form)
       localStorage.setItem('token', res.data.token)
       localStorage.setItem('user', JSON.stringify(res.data.user))
-      toast.success('Account created!')
+      toast.success(`Welcome! Registered as ${res.data.user.role}`)
       navigate('/')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed')
@@ -37,7 +37,8 @@ export default function Register() {
           <p className="text-gray-500 dark:text-gray-400 mt-1">CRM System</p>
         </div>
 
-        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-6">Create Account</h2>
+        <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-200 mb-2">Create Account</h2>
+        
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -50,7 +51,7 @@ export default function Register() {
                 value={form.name}
                 onChange={e => setForm({ ...form, name: e.target.value })}
                 className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                placeholder="Enter your name"
+                placeholder="Farah Hanif"
               />
             </div>
           </div>

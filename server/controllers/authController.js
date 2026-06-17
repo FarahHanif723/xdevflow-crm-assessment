@@ -1,22 +1,27 @@
+
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    // Pehla user automatically admin banega
+    const userCount = await User.countDocuments();
+    const role = userCount === 0 ? 'admin' : 'user';
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await User.create({ 
-      name, 
-      email, 
+    const user = await User.create({
+      name,
+      email,
       password: hashedPassword,
-      role: role || 'user'
+      role
     });
 
     const token = jwt.sign(
@@ -25,9 +30,9 @@ exports.register = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.status(201).json({ 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
+    res.status(201).json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
@@ -50,9 +55,9 @@ exports.login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.json({ 
-      token, 
-      user: { id: user._id, name: user.name, email: user.email, role: user.role } 
+    res.json({
+      token,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role }
     });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });

@@ -1,14 +1,13 @@
+
 import { useState, useEffect } from 'react'
 import Navbar from '../components/Navbar'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import {
   FiPlus, FiEdit2, FiTrash2, FiSearch,
-  FiUser, FiUsers, FiMail, FiPhone, FiBriefcase, FiX
+  FiUser, FiUsers, FiMail, FiPhone, FiBriefcase, FiX, FiClock
 } from 'react-icons/fi'
- import { useAuth } from '../hooks/useAuth'
-
-
+import { useAuth } from '../hooks/useAuth'
 
 const STATUSES = ['New', 'Contacted', 'Qualified', 'Lost', 'Won']
 
@@ -26,12 +25,15 @@ export default function Leads() {
   const [leads, setLeads] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showTimeline, setShowTimeline] = useState(false)
+  const [selectedLead, setSelectedLead] = useState(null)
   const [editLead, setEditLead] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [submitting, setSubmitting] = useState(false)
-   const { canEdit } = useAuth()
+  const { canEdit } = useAuth()
+
   const fetchLeads = async () => {
     try {
       const params = {}
@@ -68,6 +70,11 @@ export default function Leads() {
     setShowModal(true)
   }
 
+  const openTimeline = (lead) => {
+    setSelectedLead(lead)
+    setShowTimeline(true)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitting(true)
@@ -99,24 +106,41 @@ export default function Leads() {
     }
   }
 
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr)
+    return d.toLocaleString('en-PK', {
+      day: '2-digit', month: 'short', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    })
+  }
+
+  const timelineActionColor = (action) => {
+    if (action.includes('Created')) return 'bg-green-500'
+    if (action.includes('Status')) return 'bg-blue-500'
+    if (action.includes('Updated')) return 'bg-yellow-500'
+    return 'bg-gray-400'
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
 
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800 dark:text-white">Leads</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">Leads</h1>
             <p className="text-gray-500 dark:text-gray-400 mt-1">Manage your CRM leads</p>
           </div>
-          <button
-            onClick={openAddModal}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition"
-          >
-            <FiPlus className="text-lg" />
-            Add Lead
-          </button>
+          {canEdit && (
+            <button
+              onClick={openAddModal}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-6 py-3 rounded-xl transition"
+            >
+              <FiPlus className="text-lg" />
+              Add Lead
+            </button>
+          )}
         </div>
 
         {/* Search & Filter */}
@@ -152,12 +176,14 @@ export default function Leads() {
           <div className="text-center py-20">
             <FiUsers className="text-gray-300 dark:text-gray-600 text-7xl mx-auto mb-4" />
             <p className="text-gray-500 dark:text-gray-400 text-lg">No leads found</p>
-            <button
-              onClick={openAddModal}
-              className="mt-4 flex items-center gap-2 mx-auto bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition"
-            >
-              <FiPlus /> Add First Lead
-            </button>
+            {canEdit && (
+              <button
+                onClick={openAddModal}
+                className="mt-4 flex items-center gap-2 mx-auto bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg transition"
+              >
+                <FiPlus /> Add First Lead
+              </button>
+            )}
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
@@ -206,29 +232,36 @@ export default function Leads() {
                           {lead.status}
                         </span>
                       </td>
-                     <td className="px-6 py-4">
-  {canEdit ? (
-    <div className="flex gap-2">
-      <button
-        onClick={() => openEditModal(lead)}
-        className="flex items-center gap-1 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:hover:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-lg text-sm transition"
-      >
-        <FiEdit2 /> Edit
-      </button>
+                      <td className="px-6 py-4">
+                        <div className="flex gap-2 flex-wrap">
+                          {/* Timeline Button — sabke liye */}
+                          <button
+                            onClick={() => openTimeline(lead)}
+                            className="flex items-center gap-1 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900 dark:hover:bg-purple-800 text-purple-700 dark:text-purple-300 px-3 py-1.5 rounded-lg text-sm transition"
+                          >
+                            <FiClock /> History
+                          </button>
 
-      <button
-        onClick={() => handleDelete(lead._id)}
-        className="flex items-center gap-1 bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 text-red-700 dark:text-red-300 px-3 py-1.5 rounded-lg text-sm transition"
-      >
-        <FiTrash2 /> Delete
-      </button>
-    </div>
-  ) : (
-    <span className="text-xs text-gray-400 dark:text-gray-500 italic">
-      View only
-    </span>
-  )}
-</td>
+                          {canEdit ? (
+                            <>
+                              <button
+                                onClick={() => openEditModal(lead)}
+                                className="flex items-center gap-1 bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-900 dark:hover:bg-indigo-800 text-indigo-700 dark:text-indigo-300 px-3 py-1.5 rounded-lg text-sm transition"
+                              >
+                                <FiEdit2 /> Edit
+                              </button>
+                              <button
+                                onClick={() => handleDelete(lead._id)}
+                                className="flex items-center gap-1 bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800 text-red-700 dark:text-red-300 px-3 py-1.5 rounded-lg text-sm transition"
+                              >
+                                <FiTrash2 /> Delete
+                              </button>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400 dark:text-gray-500 italic">View only</span>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -238,7 +271,7 @@ export default function Leads() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* Add/Edit Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-md p-8">
@@ -309,6 +342,69 @@ export default function Leads() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Timeline Modal */}
+      {showTimeline && selectedLead && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg p-8 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                  <FiClock className="text-purple-500" /> Activity Timeline
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  {selectedLead.fullName} — {selectedLead.company}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowTimeline(false)}
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 transition"
+              >
+                <FiX className="text-xl" />
+              </button>
+            </div>
+
+            {selectedLead.timeline && selectedLead.timeline.length > 0 ? (
+              <div className="relative">
+                {/* Vertical line */}
+                <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+
+                <div className="space-y-6">
+                  {[...selectedLead.timeline].reverse().map((entry, idx) => (
+                    <div key={idx} className="flex gap-4 relative">
+                      {/* Dot */}
+                      <div className={`w-8 h-8 rounded-full ${timelineActionColor(entry.action)} flex items-center justify-center flex-shrink-0 z-10`}>
+                        <FiClock className="text-white text-sm" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 flex-1">
+                        <p className="font-semibold text-gray-800 dark:text-white text-sm">
+                          {entry.action}
+                        </p>
+                        {entry.changes && (
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            {entry.changes}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 flex items-center gap-1">
+                          <FiClock className="text-xs" />
+                          {formatDate(entry.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <FiClock className="text-gray-300 dark:text-gray-600 text-5xl mx-auto mb-3" />
+                <p className="text-gray-400">No activity yet</p>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -3,9 +3,11 @@
 client/node_modules/
 server/node_modules/
 
-# Environment Variables (Most Important!)
+# Environment Variables (
 **/.env
 server/.env
+client/.env
+client/.env.production
 .env.local
 
 # Production Build

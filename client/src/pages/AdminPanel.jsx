@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar'
 import api from '../utils/api'
 import toast from 'react-hot-toast'
 import { FiUser, FiShield, FiUsers, FiEdit2 } from 'react-icons/fi'
+import { MdAdminPanelSettings, MdManageAccounts, MdPerson } from 'react-icons/md'
 
 const ROLES = ['admin', 'manager', 'user']
 
@@ -13,9 +14,15 @@ const roleColors = {
 }
 
 const roleIcons = {
-  admin: '👑',
-  manager: '🎯',
-  user: '👤',
+  admin: <MdAdminPanelSettings className="text-red-500 text-xl" />,
+  manager: <MdManageAccounts className="text-blue-500 text-xl" />,
+  user: <MdPerson className="text-green-500 text-xl" />,
+}
+
+const roleBadgeIcons = {
+  admin: <MdAdminPanelSettings className="inline mr-1" />,
+  manager: <MdManageAccounts className="inline mr-1" />,
+  user: <MdPerson className="inline mr-1" />,
 }
 
 export default function AdminPanel() {
@@ -75,10 +82,12 @@ export default function AdminPanel() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8">
           {ROLES.map(role => (
-            <div key={role} className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 text-center">
-              <p className="text-2xl mb-1">{roleIcons[role]}</p>
+            <div key={role} className="bg-white dark:bg-gray-800 rounded-xl shadow p-3 sm:p-4 text-center">
+              <div className="flex justify-center mb-1">
+                {roleIcons[role]}
+              </div>
               <p className="text-2xl font-bold text-gray-800 dark:text-white">
                 {users.filter(u => u.role === role).length}
               </p>
@@ -94,11 +103,57 @@ export default function AdminPanel() {
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
+            <div className="px-4 sm:px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex items-center gap-2">
               <FiUsers className="text-indigo-600 dark:text-indigo-400" />
               <h2 className="font-semibold text-gray-800 dark:text-white">All Users ({users.length})</h2>
             </div>
-            <div className="overflow-x-auto">
+
+            {/* Mobile View */}
+            <div className="block sm:hidden">
+              {users.map(u => (
+                <div key={u._id} className="p-4 border-b border-gray-100 dark:border-gray-700">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center flex-shrink-0">
+                      <FiUser className="text-indigo-600 dark:text-indigo-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-800 dark:text-white truncate">{u.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{u.email}</p>
+                      {u._id === currentUser.id && (
+                        <p className="text-xs text-indigo-500">(You)</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className={`px-2 py-1 rounded-full text-xs font-semibold flex items-center gap-1 ${roleColors[u.role]}`}>
+                      {roleBadgeIcons[u.role]} {u.role}
+                    </span>
+                    {u._id === currentUser.id ? (
+                      <span className="text-xs text-gray-400">Cannot change own role</span>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={u.role}
+                          onChange={e => handleRoleChange(u._id, e.target.value)}
+                          disabled={updatingId === u._id}
+                          className="text-sm px-2 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
+                        >
+                          {ROLES.map(r => (
+                            <option key={r} value={r}>{r}</option>
+                          ))}
+                        </select>
+                        {updatingId === u._id && (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden sm:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
@@ -127,8 +182,8 @@ export default function AdminPanel() {
                       </td>
                       <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">{u.email}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${roleColors[u.role]}`}>
-                          {roleIcons[u.role]} {u.role}
+                        <span className={`px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1 w-fit ${roleColors[u.role]}`}>
+                          {roleBadgeIcons[u.role]} {u.role}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -144,7 +199,7 @@ export default function AdminPanel() {
                               className="text-sm px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
                             >
                               {ROLES.map(r => (
-                                <option key={r} value={r}>{roleIcons[r]} {r}</option>
+                                <option key={r} value={r}>{r}</option>
                               ))}
                             </select>
                             {updatingId === u._id && (
