@@ -95,13 +95,13 @@ Git
 git clone [https://github.com/FarahHanif723/xdevflow-crm-assessment.git](https://github.com/FarahHanif723/xdevflow-crm-assessment.git)
 cd xdevflow-crm-assessment
 ## 2. Backend Setup
-## cd server
-## npm install
-## node server.js
+ cd server
+ npm install
+ node server.js
 ## 3. Frontend Setup
 cd ../client
-## npm install
+ npm install
 Start the frontend development server:
-## npm run dev
-License
+ npm run dev
+## License
 This project was built as part of the XDevFlow Internship Assessment.
