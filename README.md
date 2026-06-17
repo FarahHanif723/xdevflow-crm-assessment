@@ -5,8 +5,7 @@ A modern, full-stack Customer Relationship Management (CRM) system built with Re
 
 ## Live Demo
 
-- Frontend: [Coming Soon - Vercel]
-- Backend: [Coming Soon - Render]
+https://xdevflow-crm-frontend.vercel.app/
 
 ## Test Credentials
 
