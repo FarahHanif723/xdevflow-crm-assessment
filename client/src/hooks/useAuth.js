@@ -11,7 +11,7 @@ export const useAuth = () => {
   const logout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    window.location.href = '/login'
+    window.location.replace('/login')  // replace instead of href
   }
 
   const isAdmin = user?.role === 'admin'
